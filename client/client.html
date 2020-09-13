@@ -1,33 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <title>Our simple HTTP server</title>
-  <link rel="stylesheet" type="text/css" href="/style.css">
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
-  <script type="text/babel">
 
+<head>
+    <title>HTTP API Assignment</title>
+    <link rel="stylesheet" type="text/css" href="/style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+    <script type="text/babel">
+        //function to handle our xhr response
+    const handleResponse = (xhr) => {
+      const type = xhr.getResponseHeader('content-type');
+      //grab the content section
+      const content = document.querySelector("#content");
+      let obj;
+      let messageToPrint;
+      if (type === 'application/json') {
+        ///parse the response text into a JSON object
+        obj = JSON.parse(xhr.response);
+        messageToPrint = obj.message;
+      }
+      else if (type === 'text/xml') {
+        obj = xhr.responseXML;
+        messageToPrint = xhr.responseXML.querySelector('message').textContent;
+      }
+      
+      ///parse the response text into a JSON object
+      //const obj = JSON.parse(xhr.response);
+      
+      //check the xhr status code and handle accordingly
+      switch(xhr.status) {
+        case 200: //success
+          content.innerHTML = `<b>Success</b> <p>${messageToPrint}</p>`;
+          console.log(obj);
+          break;
+        case 400: //bad request 
+          content.innerHTML = `<b>Bad Request</b> <p>${messageToPrint}</p>`;
+          console.log(obj);
+          break;
+        case 401: //unauthorized
+          content.innerHTML = `<b>Unauthorized</b> <p>${messageToPrint}</p>`;
+          console.log(obj);
+          break;
+        case 403: //forbidden
+          content.innerHTML = `<b>Forbidden</b> <p>${messageToPrint}</p>`;
+          console.log(obj);
+          break;
+        case 404: //not found (requested resource does not exist)
+          content.innerHTML = `<b>Resource Not Found</b> <p>${messageToPrint}</p>`;
+          console.log(obj);
+          break;
+        case 500: //internal error
+          content.innerHTML = `<b>Internal error</b> <p>${messageToPrint}</p>`;
+          console.log(obj);
+          break;
+        case 501: //notImplemented
+          content.innerHTML = `<b>Not Implemented</b> <p>${messageToPrint}</p>`
+          console.log(obj);
+          break;
+        //don't really need a default here but just in case
+        default: //default other errors we are not handling in this example
+          content.innerHTML = `<b>Error code not implemented by client.</b>`;
+          break;
+      }
+    };
+    
+    //function to send ajax
+    const sendAjax = (url, responseType) => {
+      //create a new xhr (ajax) request. 
+      //Remember that these are ASYNCHRONOUS
+      const xhr = new XMLHttpRequest();
+      //set the xhr to a GET request to a certain URL
+      xhr.open('GET', url);
+      //Set the accept headers to the desired response mime type
+      //Server does NOT have to support this. It is a gentle request.
+      xhr.setRequestHeader ("Accept", responseType);
+      console.log(responseType);
+
+      //When the xhr loads, call handleResponse and pass the xhr object
+      xhr.onload = () => handleResponse(xhr);
+
+      //send our ajax request to the server
+      xhr.send();
+    };
+
+    //initialization function
+    const init = () => {
+       const page = document.querySelector("#page");
+        const send = document.querySelector("#send");
+        send.addEventListener('click', (e) => {
+            let responseType = document.querySelector("#type").value;
+            page.addEventListener('change', sendAjax(page.value, responseType));
+        });
+    };
+
+    window.onload = init;
   </script>
 </head>
+
 <body>
-  <section id="top">
-    <h3>Status Code Tests</h3>
-    <select id="page">
-      <option value="/success">Success</option>
-      <option value="/badRequest">Bad Request</option>
-      <option value="/unauthorized">Unauthorized</option>
-      <option value="/forbidden">Forbidden</option>
-      <option value="/internal">Internal</option>
-      <option value="/notImplemented">Not Implemented</option>
-      <option value="/notFound">Not Found</option>
-    </select>
-    <select id="type">
-      <option value="application/json">JSON</option>
-      <option value="text/xml">XML</option>
-    </select>
-    <button id="send">Send</button>
-  </section>
-  <section id="content">
-  </section>
+    <section id="top">
+        <h3>Status Code Tests</h3>
+        <select id="page">
+            <option value="/success">Success</option>
+            <option value="/badRequest">Bad Request</option>
+            <option value="/unauthorized">Unauthorized</option>
+            <option value="/forbidden">Forbidden</option>
+            <option value="/internal">Internal</option>
+            <option value="/notImplemented">Not Implemented</option>
+            <option value="/notFound">Not Found</option>
+        </select>
+        <select id="type">
+            <option value="application/json">JSON</option>
+            <option value="text/xml">XML</option>
+        </select>
+        <button id="send">Send</button>
+    </section>
+    <section id="content">
+    </section>
 </body>
+
 </html>
